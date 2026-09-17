@@ -1,0 +1,25 @@
+# 数据处理与分析
+numpy
+pandas
+scipy
+
+# 可视化
+matplotlib
+seaborn
+
+# 机器学习
+scikit-learn
+
+# 数据库
+sqlalchemy
+pymysql
+
+# Excel 读写
+openpyxl
+
+# 网络请求（爬虫/调 API 用）
+requests
+
+# 交互式环境与看板
+jupyterlab
+streamlit

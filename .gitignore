@@ -1,0 +1,51 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ---- 虚拟环境 ----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ---- 数据文件：大文件不传 GitHub ----
+# 保留目录结构（.gitkeep），但忽略实际数据
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# 常见数据格式（万一放在别处）
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.db
+*.sqlite
+*.sqlite3
+
+# ---- 输出结果 ----
+output/*
+!output/.gitkeep
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---- 密钥：绝对不能传上去 ----
+.env
+*.key
+*.pem
+secrets.json
