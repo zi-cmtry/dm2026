@@ -32,6 +32,10 @@ data/processed/*
 *.sqlite
 *.sqlite3
 
+# 例外：reports/ 下的小体积汇总产物是交付物，要入库
+# （全量结果写在 output/ 且被上面规则排除）
+!reports/*.csv
+
 # ---- 输出结果 ----
 output/*
 !output/.gitkeep

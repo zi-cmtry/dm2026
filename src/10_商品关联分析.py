@@ -245,9 +245,34 @@ else:
 # ---------------------------------------------------------------
 section("步骤 5：保存结果")
 
-out = ROOT / "reports" / "商品关联规则.csv"
-pairs.sort_values("提升度", ascending=False).to_csv(out, index=False, encoding="utf-8-sig")
-print(f"  已保存 {len(pairs):,} 条关联规则 -> {out.relative_to(ROOT)}")
+sorted_pairs = pairs.sort_values("提升度", ascending=False)
+
+# ── 全量结果写到 output/（已被 .gitignore 排除）───────────────────
+full_path = ROOT / "output" / "商品关联规则_全量.csv"
+full_path.parent.mkdir(parents=True, exist_ok=True)
+sorted_pairs.to_csv(full_path, index=False, encoding="utf-8-sig")
+print(f"  全量 {len(sorted_pairs):,} 条 -> {full_path.relative_to(ROOT)}"
+      f"  ({full_path.stat().st_size / 1024 / 1024:.1f} MB，不入库)")
+
+# ── 只把 Top 100 放进 reports/ 并提交 ─────────────────────────────
+top_path = ROOT / "reports" / "商品关联规则_Top100.csv"
+sorted_pairs.head(100).to_csv(top_path, index=False, encoding="utf-8-sig")
+print(f"  Top 100      -> {top_path.relative_to(ROOT)}"
+      f"  ({top_path.stat().st_size / 1024:.1f} KB，入库)")
+
+print("""
+    💡 一个工程习惯：生成物不进 git。
+
+       应该提交的是「代码 + 能重新产出结果的脚本」，
+       而不是脚本的产物。理由有两个：
+         ① 产物随时能重新生成，提交它是冗余
+         ② 每次重跑都会在 git 历史里再压一份，
+            48,028 行的 CSV 多跑几次，仓库就臃肿了
+
+       那为什么还留一个 Top 100 在 reports/ 里？
+       因为「可读性」也是交付价值 —— 别人打开仓库，
+       能直接看到最强的 100 条关联规则，而不用先跑一遍代码。
+""")
 
 con.close()
 
