@@ -1,0 +1,377 @@
+# -*- coding: utf-8 -*-
+"""
+第 9 课：生成汇报 PPT
+
+━━━ 为什么用代码生成 PPT？━━━
+    手敲 PPT 是纯体力活，而且数据一改就得重敲。
+    用 python-pptx 生成的好处：
+        · 数据全部来自分析结果，不会出现「PPT 上的数字和代码对不上」
+        · 改一行代码就能重新生成一版
+        · 排版统一，不会东倒西歪
+
+运行方式（仓库根目录下）：
+    pip install python-pptx
+    python src/09_生成汇报PPT.py
+
+输出：reports/汇报PPT.pptx
+
+━━━ 写这个脚本时踩的坑（留作记录）━━━
+    1. 中文引号问题：Python 字符串里再嵌英文双引号会直接语法错误，
+       本文件统一用「」做内层引号。
+    2. PowerShell 不会为原生命令展开通配符，`python -m py_compile src/*.py`
+       是无效的，必须自己循环。
+"""
+
+from pathlib import Path
+
+from pptx import Presentation
+from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Emu, Inches, Pt
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "reports" / "汇报PPT.pptx"
+FIG = ROOT / "reports" / "figures" / "churn_model.png"
+
+NAVY = RGBColor(0x1F, 0x36, 0x4D)
+BLUE = RGBColor(0x2E, 0x6D, 0xA4)
+GREY = RGBColor(0x5A, 0x64, 0x70)
+WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+LIGHT = RGBColor(0xC9, 0xD6, 0xE2)
+
+FONT = "Microsoft YaHei"
+
+prs = Presentation()
+prs.slide_width = Inches(13.333)   # 16:9
+prs.slide_height = Inches(7.5)
+BLANK = prs.slide_layouts[6]
+
+
+def style_run(run, size=18, bold=False, color=NAVY):
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.name = FONT
+    run.font.color.rgb = color
+
+
+def add_title(slide, text, size=30):
+    box = slide.shapes.add_textbox(Inches(0.7), Inches(0.42), Inches(11.9), Inches(0.9))
+    tf = box.text_frame
+    tf.text = text
+    style_run(tf.paragraphs[0].runs[0], size=size, bold=True, color=NAVY)
+    bar = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, Inches(0.7), Inches(1.32), Inches(11.9), Emu(25000)
+    )
+    bar.fill.solid()
+    bar.fill.fore_color.rgb = BLUE
+    bar.line.fill.background()
+    bar.shadow.inherit = False
+    return box
+
+
+def add_bullets(slide, items, left=0.9, top=1.7, width=11.7, height=5.3, size=17):
+    box = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
+    tf = box.text_frame
+    tf.word_wrap = True
+    for i, item in enumerate(items):
+        level, text = item if isinstance(item, tuple) else (0, item)
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.level = level
+        p.text = ("· " if level == 1 else "") + text
+        p.space_after = Pt(8)
+        for run in p.runs:
+            style_run(run, size=size - level * 2, color=NAVY if level == 0 else GREY)
+    return box
+
+
+def add_notes(slide, text):
+    slide.notes_slide.notes_text_frame.text = text
+
+
+def new_slide():
+    return prs.slides.add_slide(BLANK)
+
+
+def cover(title, subtitle, footer_main, footer_link, band_top):
+    s = new_slide()
+    band = s.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, 0, Inches(band_top), prs.slide_width, Inches(2.6)
+    )
+    band.fill.solid()
+    band.fill.fore_color.rgb = NAVY
+    band.line.fill.background()
+    band.shadow.inherit = False
+
+    box = s.shapes.add_textbox(Inches(1.0), Inches(band_top + 0.35), Inches(11.3), Inches(1.2))
+    tf = box.text_frame
+    tf.text = title
+    style_run(tf.paragraphs[0].runs[0], size=42, bold=True, color=WHITE)
+
+    box2 = s.shapes.add_textbox(Inches(1.0), Inches(band_top + 1.55), Inches(11.3), Inches(0.8))
+    tf2 = box2.text_frame
+    tf2.text = subtitle
+    style_run(tf2.paragraphs[0].runs[0], size=19, color=LIGHT)
+
+    box3 = s.shapes.add_textbox(Inches(1.0), Inches(band_top + 3.1), Inches(11.3), Inches(1.2))
+    tf3 = box3.text_frame
+    tf3.text = footer_main
+    style_run(tf3.paragraphs[0].runs[0], size=16, color=GREY)
+    p = tf3.add_paragraph()
+    p.text = footer_link
+    style_run(p.runs[0], size=14, color=BLUE)
+    return s
+
+
+# ══════════════════════════════════════════════════════
+# 1 封面
+# ══════════════════════════════════════════════════════
+s = cover(
+    "电商用户行为分析",
+    "基于 106 万行真实交易数据的完整数据分析实践",
+    "成都理工大学 · 大数据管理与应用",
+    "github.com/zi-cmtry/dm2026",
+    2.5,
+)
+add_notes(s, "开场 15 秒：我是谁 + 这个项目解决了什么问题。")
+
+
+# ══════════════════════════════════════════════════════
+# 2 大纲
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "汇报大纲")
+add_bullets(s, [
+    "一、项目背景与目标",
+    "二、数据说明：106 万行、43 个国家",
+    "三、方法论：为什么「不删数据」",
+    "四、核心发现（5 个）",
+    "五、运营建议",
+    "六、局限性与方法论反思",
+], size=20)
+
+
+# ══════════════════════════════════════════════════════
+# 3 背景
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "一、项目背景与目标")
+add_bullets(s, [
+    "数据来源：UCI Online Retail II —— 一家英国在线零售商的真实交易流水",
+    "业务模式：B 端批发，客户主要是反复进货的零售商家",
+    ("", ""),
+    "要回答的三个问题：",
+    (1, "生意整体状况如何？钱从哪来？"),
+    (1, "客户结构长什么样？谁最值钱？"),
+    (1, "哪些客户快要流失？能不能提前识别？"),
+])
+add_notes(s, "强调是真实数据而非玩具数据集 —— 数据里有很多脏东西，清洗本身就是一个环节。")
+
+
+# ══════════════════════════════════════════════════════
+# 4 数据说明
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "二、数据说明")
+add_bullets(s, [
+    "规模：1,067,371 行 × 8 列，时间跨度 2009-12 ~ 2011-12，覆盖 43 个国家",
+    ("", ""),
+    "⚠️ 最关键的一个事实：数据粒度是「商品明细行」，不是「订单」",
+    (1, "一笔订单包含多个商品行 → 订单数必须用 COUNT(DISTINCT Invoice)"),
+    (1, "销售额没有现成列，必须自己算 SUM(Quantity × Price)"),
+    ("", ""),
+    "数据质量问题（真实数据的常态）：",
+    (1, "Customer ID 缺失 20.5% —— 五分之一的订单不知道是谁买的"),
+    (1, "Quantity 为负 12,326 行 —— 退货"),
+    (1, "Invoice 以 C 开头 10,206 行 —— 取消单"),
+    (1, "Price 最大 25,111 —— 明显是人工调整，不是真实单价"),
+])
+add_notes(s, "这一页最重要的是「粒度」—— 面试最爱问这个，答不上来就露怯。")
+
+
+# ══════════════════════════════════════════════════════
+# 5 方法论
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "三、方法论：清洗不等于删除")
+add_bullets(s, [
+    "常见误区：把「脏数据」一律删掉",
+    ("", ""),
+    "我的做法：先给每一行打「类型标签」，再按分析用途拆成 3 张表",
+    (1, "sales（104 万行）—— 交易分析：销售额、商品排名、国家分布"),
+    (1, "sales_known（80 万行）—— 用户分析：RFM、留存、复购、流失预测"),
+    (1, "cancellations（1.9 万行）—— 取消率分析"),
+    ("", ""),
+    "为什么不能删？匿名订单里有 £3,229,165 的真实营收，",
+    "占全部销售额的 15.40%。删掉它，总营收就凭空少了一大块。",
+])
+add_notes(s, "核心观点：删掉就回不来了，打标随时能筛。这在工程上叫「软删除」。")
+
+
+# ══════════════════════════════════════════════════════
+# 6 发现一
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "四、核心发现 ①　经营概况与季节性")
+add_bullets(s, [
+    "销售额 £20,972,594　｜　订单 40,077 笔　｜　客单价 £523.31　｜　客户 5,878 人",
+    ("", ""),
+    "明显的季节性：每年 9 月开始爬升，11 月达到峰值",
+    (1, "这家店卖礼品和家居装饰，11 月对应圣诞备货季 —— 品类决定季节曲线"),
+    ("", ""),
+    "⚠️ 一个容易讲错的地方：",
+    (1, "清洗后销售额（£20,972,594）反而高于原始总金额（£19,287,250）"),
+    (1, "因为原始总额里混着退货和取消的负数"),
+    (1, "汇报时必须区分「毛销售额」和「净销售额」"),
+])
+
+
+# ══════════════════════════════════════════════════════
+# 7 发现二
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "四、核心发现 ②　匿名订单的价值被低估")
+add_bullets(s, [
+    "订单类型　　　　订单数　　　　销售额　　　　　客单价",
+    (1, "匿名订单　　　　 3,108　　 £3,229,165　　　£1,038.99"),
+    (1, "已知客户　　　　36,969　　£17,743,429　　　　£479.95"),
+    ("", ""),
+    "匿名订单客单价是已知客户的 2.17 倍，",
+    "只用 7.8% 的订单贡献了 15.4% 的营收",
+    ("", ""),
+    "常见假设是「没留客户信息的都是小散客」—— 数据证明恰恰相反。",
+    "推测是电话或传真下单的大宗批发客户（系统未记录客户号）。",
+    ("", ""),
+    "⭐ 这条洞察完全来自「清洗时不删数据」的那个决定。",
+])
+add_notes(s, "全场最亮的一页。注意措辞是「推测」而不是「证明」—— 要证实需要订单来源字段。")
+
+
+# ══════════════════════════════════════════════════════
+# 8 发现三
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "四、核心发现 ③　RFM 分层：二八法则验证")
+add_bullets(s, [
+    "客户分层　　　　客户数　　占比　　　消费占比",
+    (1, "重要价值客户　　 1,344　　22.86%　　 68.82%　← 二八法则"),
+    (1, "重要保持客户　　　 711　　12.10%　　 16.00%"),
+    (1, "一般挽留客户　　 2,445　　41.60%　　　5.94%"),
+    (1, "重要挽留客户　　　 211　　 3.59%　　　3.21%　← 平均 290 天没来"),
+    ("", ""),
+    "方法：对 R / F / M 各用 NTILE(5) 均分五档，组合成 8 类客户",
+    ("", ""),
+    "最值得投入的是那 211 名「重要挽留客户」：",
+    "人数少、历史消费高、还来得及召回。",
+])
+
+
+# ══════════════════════════════════════════════════════
+# 9 发现四
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "四、核心发现 ④　留存与复购")
+add_bullets(s, [
+    "复购率 72.39%，人均 6.29 单",
+    ("", ""),
+    "同期群留存曲线（按首次购买月份分组）：",
+    (1, "M0 100% → M1 21.2% → M2 21.9% → M3 21.6% → M6 17.8%"),
+    (1, "M0→M1 断崖下跌后立刻走平 —— 这叫「留存平台期」"),
+    (1, "说明存在约 20% 的稳定忠实客户，是健康业务的标志"),
+    ("", ""),
+    "客户生命周期漏斗：",
+    (1, "全部 5,878 → 复购 72.4% → 高频 36.8% → 忠诚 16.6% → 核心 0.9%"),
+    ("", ""),
+    "⚠️ 统计陷阱：2009-12 队列留存虚高（35.3%），因为数据从该月才开始，",
+    "他们的「首次购买」不是真的首次 —— 这叫「左截断」，必须剔除。",
+])
+
+
+# ══════════════════════════════════════════════════════
+# 10 发现五
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "四、核心发现 ⑤　流失预测模型")
+add_bullets(s, [
+    "问题设定：站在 2011-06-30，预测未来半年不会回购的客户",
+    (1, "特征期 2009-12~2011-06（9 个行为特征）｜ 标签期 2011-07~2011-12"),
+    ("", ""),
+    "模型对比：逻辑回归 AUC 0.8111　vs　随机森林 AUC 0.7942",
+    (1, "⭐ 简单模型胜出 —— 结构化小数据上方差更小、可解释性更强"),
+    ("", ""),
+    "最重要的特征：距上次购买天数 ＞ 总消费 ＞ 平均购买间隔",
+    (1, "可落地为一条规则：超过 X 天未下单，自动触发召回"),
+    ("", ""),
+    "模型交付物：一份按流失概率排序的客户名单",
+    (1, "Top 20 客户历史消费合计 £129,936，实际命中率 90%"),
+], width=7.9)
+
+if FIG.exists():
+    s.shapes.add_picture(str(FIG), Inches(8.85), Inches(3.4), width=Inches(3.9))
+
+
+# ══════════════════════════════════════════════════════
+# 11 运营建议
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "五、运营建议")
+add_bullets(s, [
+    "按 RFM 分层给出差异化动作：",
+    (1, "重要价值客户（1,344）—— VIP 待遇：专属客服、优先发货、新品试用"),
+    (1, "重要保持客户（711）—— 防流失：一对一回访、大额专属折扣"),
+    (1, "重要挽留客户（211）—— 最紧急：强力召回券 + 电话触达"),
+    (1, "重要发展客户（84）—— 提频次：满减券、组合套餐、会员积分"),
+    (1, "一般挽留客户（2,445）—— 不投预算，避免浪费"),
+    ("", ""),
+    "最高优先级的两件事：",
+    (1, "召回 211 名「重要挽留客户」—— 人数少、价值高、还来得及"),
+    (1, "转化 27.61% 的「首购未复购」客户 —— 人数最多，而拉新成本是复购运营的 5 倍以上"),
+])
+
+
+# ══════════════════════════════════════════════════════
+# 12 局限与反思
+# ══════════════════════════════════════════════════════
+s = new_slide()
+add_title(s, "六、局限性与方法论反思")
+add_bullets(s, [
+    "诚实的局限：",
+    (1, "数据是 2009-2011 年的英国零售数据，结论不能直接迁移到当前中国市场"),
+    (1, "无埋点行为数据 → 做不出「浏览-加购-支付」漏斗，也做不了 A/B 测试"),
+    (1, "无成本数据 → 无法计算真实利润和 ROI"),
+    (1, "取消单无法回溯原订单：取消单号去掉 C 后匹配率为 0 / 8,292"),
+    ("", ""),
+    "⭐ 方法论反思 —— 本项目最有价值的部分：",
+    (1, "我有 4 处预写判断被数据推翻（退货分类、客单价、周六订单、购买分布）"),
+    (1, "其中一处，我为了「修正」它做的第二次推断也是错的"),
+    (1, "由此确立纪律：任何「我觉得应该是」，先跑一条 SQL 验证再写进报告"),
+])
+add_notes(s, "这一页是加分项。多数人不会主动讲自己的错误，讲出来反而显得专业。")
+
+
+# ══════════════════════════════════════════════════════
+# 13 结尾
+# ══════════════════════════════════════════════════════
+s = cover(
+    "感谢聆听，欢迎提问",
+    "github.com/zi-cmtry/dm2026",
+    "成都理工大学 · 大数据管理与应用",
+    "",
+    2.7,
+)
+
+
+prs.save(OUT)
+
+n_slides = len(prs.slides._sldIdLst)
+print(f"✅ PPT 已生成: {OUT.relative_to(ROOT)}")
+print(f"   共 {n_slides} 页")
+print()
+print("📌 用代码生成 PPT 的好处：")
+print("   · 所有数字都来自分析结果，不会出现 PPT 和代码对不上的情况")
+print("   · 数据一改，重跑一次脚本就得到新版本")
+print("   · 每页都写了备注（放映时用「演讲者视图」能看到），照着讲就行")
+print()
+print("📌 讲的时候记住三件事：")
+print("   1. 开头 15 秒说清「我解决了什么问题」")
+print("   2. 中间只讲最有价值的 2-3 个发现，别逐页念")
+print("   3. 主动讲局限性 —— 面试官最欣赏这个")

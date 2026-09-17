@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第一个文件：环境自检 + 一个最小的「数据分析闭环」
 
 运行方式（在仓库根目录 dm2026/ 下执行）：
-    python src/first_data_demo.py
+    python src/00_环境自检.py
 
 这个文件故意做得很小，但它一次串起了三件事：
     1. 确认 Python 和各个库能正常 import

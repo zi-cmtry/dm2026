@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 4 课：用 SQL 做真正的业务分析（基础聚合篇）
 
@@ -14,7 +14,7 @@
         所有"我觉得应该是……"都必须跑一条 SQL 验证。
 
 运行方式（仓库根目录下）：
-    python src/04_business_analysis.py
+    python src/04_业务分析.py
 """
 
 import sqlite3

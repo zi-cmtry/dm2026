@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 5 课：窗口函数 + RFM 用户分层
 
@@ -28,7 +28,7 @@
     LAG()/LEAD() 取上一行 / 下一行（算环比、留存）
 
 运行方式（仓库根目录下）：
-    python src/05_rfm_analysis.py
+    python src/05_RFM用户分层.py
 """
 
 import sqlite3

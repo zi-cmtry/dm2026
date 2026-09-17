@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 2 课：数据清洗
 
@@ -15,7 +15,7 @@
     4. 取消单（Invoice 以 C 开头）单独存一张表，用于算取消率
 
 运行方式（仓库根目录下）：
-    python src/02_clean_data.py
+    python src/02_数据清洗.py
 """
 
 from pathlib import Path

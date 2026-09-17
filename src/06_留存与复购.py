@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 6 课：留存率与复购分析
 
@@ -23,7 +23,7 @@
     条件聚合           SUM(CASE WHEN ... THEN 1 ELSE 0 END) 做漏斗
 
 运行方式（仓库根目录下）：
-    python src/06_retention_analysis.py
+    python src/06_留存与复购.py
 """
 
 import sqlite3

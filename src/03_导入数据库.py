@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 3 课：把数据装进 SQLite —— 第一次真正写 SQL
 
@@ -13,7 +13,7 @@
     DQL (查询)  : SELECT
 
 运行方式（仓库根目录下）：
-    python src/03_load_to_sqlite.py
+    python src/03_导入数据库.py
 """
 
 import sqlite3

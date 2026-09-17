@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 第 1 课：认识数据
 
@@ -9,7 +9,7 @@
     你得先知道每一列的业务含义，才能判断哪些异常"该删"、哪些"该留"。
 
 运行方式（在仓库根目录 dm2026/ 下执行）：
-    python src/01_inspect_data.py
+    python src/01_数据探查.py
 """
 
 from pathlib import Path
