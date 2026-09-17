@@ -23,3 +23,9 @@ requests
 # 交互式环境与看板
 jupyterlab
 streamlit
+
+# 时间序列分析（季节分解、指数平滑）
+statsmodels
+
+# 生成汇报 PPT
+python-pptx

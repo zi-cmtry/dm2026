@@ -74,7 +74,20 @@ def add_bullets(slide, items, left=0.9, top=1.7, width=11.7, height=5.3, size=17
     tf = box.text_frame
     tf.word_wrap = True
     for i, item in enumerate(items):
-        level, text = item if isinstance(item, tuple) else (0, item)
+        if isinstance(item, tuple):
+            level, text = item
+            # ── 容错设计 ──────────────────────────────────────────
+            # 允许用 ("", "") 表示空行。必须把 level 归一化成 int，
+            # 否则 python-pptx 抛 TypeError: value must be an integral type。
+            #
+            # 这个坑我在本文件里犯了【三次】：
+            #   第一次：写了 ("", "")，level 变成 ""
+            #   第二次：改完只在数据里替换，没改函数
+            #   第三次：新加两页 PPT 时又抄了 ("", "") 的写法
+            # 结论：靠"记住"防不住重复犯错，靠"让函数不可能出错"才行。
+            level = int(level) if str(level).strip().isdigit() else 0
+        else:
+            level, text = 0, item
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.level = level
         p.text = ("· " if level == 1 else "") + text
